@@ -191,7 +191,7 @@
     <!-- FORM INPUT -->
     <div class="card">
       <h2 style="font-size:1rem; margin-bottom:6px;">Input Data Baru</h2>
-      <p class="subtitle" style="margin-bottom:8px;">IP & SSID diisi otomatis. Lengkapi MACC dan ROUTER.</p>
+      <p class="subtitle" style="margin-bottom:8px;">IP & SSID diisi otomatis. MACC & ROUTER bisa dipilih dari daftar.</p>
 
       <form id="dataForm">
         <div class="form-row">
@@ -212,11 +212,13 @@
           </div>
           <div class="form-group">
             <label for="ROUTER">ROUTER</label>
-            <input type="text" id="ROUTER" name="ROUTER" placeholder="Nama router" required>
+            <input type="text" id="ROUTER" name="ROUTER" list="routerList" placeholder="Pilih atau ketik ROUTER" required>
+            <datalist id="routerList"></datalist>
           </div>
         </div>
 
         <button type="submit" class="btn" id="submitBtn">Kirim</button>
+
       </form>
 
       <div id="status" class="status"></div>
@@ -228,14 +230,16 @@
     const IP_PREFIX = '192.168.200.';
     const IP_MAX    = 253;
 
-    const dataBody   = document.getElementById('dataBody');
-    const form       = document.getElementById('dataForm');
-    const statusEl   = document.getElementById('status');
-    const ipInput    = document.getElementById('IP');
-    const ssidInput  = document.getElementById('SSID');
-    const submitBtn  = document.getElementById('submitBtn');
-    const maccInput  = document.getElementById('MACC');
-    const refreshBtn = document.getElementById('refreshBtn');
+    const dataBody    = document.getElementById('dataBody');
+    const form        = document.getElementById('dataForm');
+    const statusEl    = document.getElementById('status');
+    const ipInput     = document.getElementById('IP');
+    const ssidInput   = document.getElementById('SSID');
+    const submitBtn   = document.getElementById('submitBtn');
+    const maccInput   = document.getElementById('MACC');
+    const refreshBtn  = document.getElementById('refreshBtn');
+    const routerInput = document.getElementById('ROUTER');
+    const routerList  = document.getElementById('routerList');
 
     let isLoading = false;
 
@@ -258,7 +262,6 @@
       }
     }
 
-    // SSID auto-increment: "P.GEMILANG 2" -> "P.GEMILANG 3"
     function incrementSSID(ssidString, nextIPNumber) {
       try {
         const match = ssidString.match(/^(.+?)\s*(\d+)$/);
@@ -276,7 +279,6 @@
       }
     }
 
-    // Format MAC: auto tambah ":" setiap 2 karakter hex
     function formatMac(value) {
       let v = value.toUpperCase().replace(/[^0-9A-F]/g, '');
       v = v.slice(0, 12);
@@ -284,12 +286,25 @@
       return parts.join(':');
     }
 
-    // Format MAC saat user mengetik
     maccInput.addEventListener('input', () => {
       const formatted = formatMac(maccInput.value);
       maccInput.value = formatted;
       maccInput.selectionStart = maccInput.selectionEnd = formatted.length;
     });
+
+    // isi datalist router dari seluruh data unik
+    function updateRouterList(allData) {
+      const routers = allData
+        .map(row => row.ROUTER)
+        .filter(r => typeof r === 'string' && r.trim() !== '');
+      const uniqueRouters = [...new Set(routers)];
+      routerList.innerHTML = '';
+      uniqueRouters.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        routerList.appendChild(opt);
+      });
+    }
 
     async function loadData() {
       try {
@@ -301,14 +316,22 @@
         const json = await res.json();
         const allData = Array.isArray(json) ? json : [];
 
+        // update pilihan router dari seluruh data
+        updateRouterList(allData);
+
         if (allData.length === 0) {
           dataBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data.</td></tr>';
           ipInput.value = '';
           ssidInput.value = '';
+          routerInput.value = '';
           return;
         }
 
-        const lastData = allData[allData.length - 1];
+        const lastData   = allData[allData.length - 1];
+        const lastIP     = lastData.IP     || '';
+        const lastSSID   = lastData.SSID   || '';
+        const lastRouter = lastData.ROUTER || '';
+        const nextIP     = incrementIP(lastIP);
 
         dataBody.innerHTML = `
           <tr>
@@ -319,9 +342,8 @@
           </tr>
         `;
 
-        const lastIP   = lastData.IP   || '';
-        const lastSSID = lastData.SSID || '';
-        const nextIP   = incrementIP(lastIP);
+        // nilai default router = router terakhir (boleh diganti)
+        routerInput.value = lastRouter;
 
         if (nextIP) {
           const nextNum = parseInt(nextIP.split('.')[3], 10);
@@ -344,7 +366,6 @@
       }
     }
 
-    // Tombol manual refresh
     refreshBtn.addEventListener('click', () => {
       loadData();
     });
@@ -360,7 +381,7 @@
       const IP     = ipInput.value.trim();
       const MACC   = maccInput.value.trim();
       const SSID   = ssidInput.value.trim();
-      const ROUTER = form.ROUTER.value.trim();
+      const ROUTER = routerInput.value.trim();
 
       if (!IP || !MACC || !SSID || !ROUTER) {
         showStatus('Semua field wajib diisi.', 'err');
@@ -387,10 +408,9 @@
 
         showStatus('Data dikirim. Cek Google Sheet untuk memastikan tersimpan.', 'ok');
 
-        maccInput.value   = '';
-        form.ROUTER.value = '';
+        maccInput.value = '';
+        // ROUTER dibiarkan, biasanya input berulang di router yang sama
 
-        // Refresh otomatis setelah kirim
         setTimeout(loadData, 1000);
       } catch (err) {
         showStatus('Gagal mengirim data: ' + err.message, 'err');
@@ -400,7 +420,6 @@
       }
     });
 
-    // Hanya load sekali saat pertama kali dibuka
     loadData();
   </script>
 </body>
