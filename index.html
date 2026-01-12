@@ -57,6 +57,24 @@
       font-weight: 600;
     }
 
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .refresh-btn {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
     .form-row {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -131,6 +149,8 @@
     }
     @media (max-width: 640px) {
       .form-row { grid-template-columns: 1fr; }
+      .top-row { flex-direction: column; align-items: flex-start; }
+      .refresh-btn { align-self: flex-end; }
     }
   </style>
 </head>
@@ -144,8 +164,13 @@
 
     <!-- DATA TERAKHIR -->
     <div class="card">
-      <h2 style="font-size:1rem; margin-bottom:6px;">Data Terakhir</h2>
-      <p class="subtitle" style="margin-bottom:8px;">Menampilkan hanya baris paling akhir dari sheet.</p>
+      <div class="top-row">
+        <div>
+          <h2 style="font-size:1rem;">Data Terakhir</h2>
+          <p class="subtitle" style="margin-bottom:0;">Menampilkan baris paling akhir dari sheet.</p>
+        </div>
+        <button type="button" id="refreshBtn" class="refresh-btn">Refresh Data</button>
+      </div>
       <table>
         <thead>
           <tr>
@@ -199,18 +224,18 @@
   </div>
 
   <script>
-    // Ganti kalau URL Web App berubah
     const API_URL  = 'https://script.google.com/macros/s/AKfycbyvXCS1Jqqeydvb5lj3UA5f5xzGbLg5nIwVDxV1KQe_MO1N9YkRAfVnBOo1A3I2wwn5/exec';
     const IP_PREFIX = '192.168.200.';
     const IP_MAX    = 253;
 
-    const dataBody  = document.getElementById('dataBody');
-    const form      = document.getElementById('dataForm');
-    const statusEl  = document.getElementById('status');
-    const ipInput   = document.getElementById('IP');
-    const ssidInput = document.getElementById('SSID');
-    const submitBtn = document.getElementById('submitBtn');
-    const maccInput = document.getElementById('MACC');
+    const dataBody   = document.getElementById('dataBody');
+    const form       = document.getElementById('dataForm');
+    const statusEl   = document.getElementById('status');
+    const ipInput    = document.getElementById('IP');
+    const ssidInput  = document.getElementById('SSID');
+    const submitBtn  = document.getElementById('submitBtn');
+    const maccInput  = document.getElementById('MACC');
+    const refreshBtn = document.getElementById('refreshBtn');
 
     let isLoading = false;
 
@@ -307,7 +332,7 @@
           ipInput.value   = lastIP;
           ssidInput.value = lastSSID;
           submitBtn.disabled = true;
-          showStatus('IP sudah mencapai maksimal (' + IP_MAX + ').', 'warn');
+          showStatus('IP sudah mencapai maksimal (' + IP_MAX + ').', 'warn';
         }
       } catch (err) {
         dataBody.innerHTML = `
@@ -318,6 +343,11 @@
           </tr>`;
       }
     }
+
+    // Tombol manual refresh
+    refreshBtn.addEventListener('click', () => {
+      loadData();
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -360,6 +390,7 @@
         maccInput.value   = '';
         form.ROUTER.value = '';
 
+        // Refresh otomatis setelah kirim
         setTimeout(loadData, 1000);
       } catch (err) {
         showStatus('Gagal mengirim data: ' + err.message, 'err');
@@ -369,8 +400,8 @@
       }
     });
 
+    // Hanya load sekali saat pertama kali dibuka
     loadData();
-    setInterval(loadData, 10000);
   </script>
 </body>
 </html>
