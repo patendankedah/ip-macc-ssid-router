@@ -199,6 +199,7 @@
   </div>
 
   <script>
+    // Ganti kalau URL Web App berubah
     const API_URL  = 'https://script.google.com/macros/s/AKfycbyvXCS1Jqqeydvb5lj3UA5f5xzGbLg5nIwVDxV1KQe_MO1N9YkRAfVnBOo1A3I2wwn5/exec';
     const IP_PREFIX = '192.168.200.';
     const IP_MAX    = 253;
@@ -231,12 +232,19 @@
       }
     }
 
+    // FIX SSID: naikkan angka terakhir; kalau tidak ada angka, pakai prefix + nextIPNumber
     function incrementSSID(ssidString, nextIPNumber) {
       try {
-        const match = ssidString.match(/^(.+?)\\s*(\\d+)$/);
-        if (!match) return ssidString;
-        const prefix = match[1];
-        return prefix + ' ' + nextIPNumber;
+        const match = ssidString.match(/^(.+?)\s*(\d+)$/);
+        if (match) {
+          const prefix = match[1].trim();
+          const lastNum = parseInt(match[2], 10);
+          const newNum = lastNum + 1;
+          return prefix + ' ' + newNum;
+        }
+        const prefixOnly = (ssidString || '').trim();
+        if (!prefixOnly) return 'SSID ' + nextIPNumber;
+        return prefixOnly + ' ' + nextIPNumber;
       } catch {
         return ssidString;
       }
