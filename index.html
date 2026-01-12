@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input IP MACC SSID ROUTER</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .wrapper { width: 100%; max-width: 900px; }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      margin-bottom: 16px;
+    }
+    .title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #111827; }
+    .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
+    th { background: #f3f4f6; font-weight: 600; }
+    tr:hover td { background: #f9fafb; }
+    .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .form-group { margin-bottom: 10px; }
+    label { display: block; font-size: 12px; font-weight: 500; color: #4b5563; margin-bottom: 3px; }
+    input, select {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.2); }
+    input[readonly] { background: #f3f4f6; cursor: not-allowed; color: #666; }
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 8px 15px rgba(102,126,234,0.3);
+      transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+      margin-top: 4px;
+    }
+    .btn:active { transform: translateY(1px); box-shadow: 0 4px 8px rgba(102,126,234,0.25); opacity: 0.9; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .status {
+      margin-top: 8px;
+      font-size: 12px;
+      text-align: center;
+      padding: 6px;
+      border-radius: 6px;
+    }
+    .status.ok { color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; }
+    .status.err { color: #991b1b; background: #fee2e2; border: 1px solid #fecaca; }
+    .status.warning { color: #92400e; background: #fef3c7; border: 1px solid #fde68a; }
+    .status.loading { color: #1e40af; background: #dbeafe; border: 1px solid #bfdbfe; }
+    .loading-spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #667eea;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="title">📊 Data Terakhir</div>
+      <div class="subtitle">Menampilkan baris terakhir dari Google Sheet.</div>
+      <div style="overflow-x:auto;">
+        <table id="dataTable">
+          <thead>
+            <tr><th>IP</th><th>MACC</th><th>SSID</th><th>ROUTER</th></tr>
+          </thead>
+          <tbody id="dataBody">
+            <tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">➕ Input Data Baru</div>
+      <div class="subtitle">IP & SSID increment otomatis. Isi MACC & pilih ROUTER.</div>
+      <form id="dataForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="IP">IP Address <span style="color:#999;">(Auto Increment)</span></label>
+            <input type="text" id="IP" name="IP" readonly placeholder="Diisi otomatis">
+          </div>
+          <div class="form-group">
+            <label for="MACC">MAC Address <span style="color:#999;">(Manual)</span></label>
+            <input type="text" id="MACC" name="MACC" placeholder="AA:BB:CC:DD:EE:FF" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="SSID">SSID <span style="color:#999;">(Auto Increment)</span></label>
+            <input type="text" id="SSID" name="SSID" readonly placeholder="Diisi otomatis">
+          </div>
+          <div class="form-group">
+            <label for="ROUTER">ROUTER <span style="color:#999;">(Pilih/Ketik)</span></label>
+            <input type="text" id="ROUTER" name="ROUTER" list="routerList" placeholder="Pilih atau ketik ROUTER" required>
+            <datalist id="routerList"></datalist>
+          </div>
+        </div>
+        <button type="submit" class="btn" id="submitBtn">Kirim</button>
+      </form>
+      <div id="status" class="status" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyvXCS1Jqqeydvb5lj3UA5f5xzGbLg5nIwVDxV1KQe_MO1N9YkRAfVnBOo1A3I2wwn5/exec';
+    const IP_PREFIX = '192.168.200.';
+    const IP_MAX = 253;
+    const dataBody = document.getElementById('dataBody');
+    const form = document.getElementById('dataForm');
+    const statusEl = document.getElementById('status');
+    const ipInput = document.getElementById('IP');
+    const ssidInput = document.getElementById('SSID');
+    const routerList = document.getElementById('routerList');
+    const submitBtn = document.getElementById('submitBtn');
+    let allData = [];
+    let isLoading = false;
+    function incrementIP(ipString) {
+      try {
+        const parts = ipString.split('.');
+        if (parts.length !== 4) return null;
+        let lastOctet = parseInt(parts[3], 10);
+        lastOctet++;
+        if (lastOctet > IP_MAX) return null;
+        return `${IP_PREFIX}${lastOctet}`;
+      } catch (err) { return null; }
+    }
+    function incrementSSID(ssidString, nextIPNumber) {
+      try {
+        const match = ssidString.match(/^(.+?)\s*(\d+)$/);
+        if (!match) return ssidString;
+        const prefix = match[1];
+        return `${prefix} ${nextIPNumber}`;
+      } catch (err) { return ssidString; }
+    }
+    async function loadData() {
+      try {
+        dataBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>';
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const jsonResponse = await res.json();
+        if (jsonResponse.status === 'error') throw new Error(jsonResponse.message);
+        allData = Array.isArray(jsonResponse) ? jsonResponse : [];
+        if (allData.length === 0) {
+          dataBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data.</td></tr>';
+          ipInput.value = '';
+          ssidInput.value = '';
+          routerList.innerHTML = '';
+          return;
+        }
+        const lastData = allData[allData.length - 1];
+        dataBody.innerHTML = '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${lastData.IP || '-'}</td><td>${lastData.MACC || '-'}</td><td>${lastData.SSID || '-'}</td><td>${lastData.ROUTER || '-'}</td>`;
+        dataBody.appendChild(tr);
+        const lastIP = lastData.IP || '';
+        const lastSSID = lastData.SSID || '';
+        const nextIP = incrementIP(lastIP);
+        if (nextIP) {
+          const nextIPNumber = parseInt(nextIP.split('.')[3], 10);
+          ipInput.value = nextIP;
+          const nextSSID = incrementSSID(lastSSID, nextIPNumber);
+          ssidInput.value = nextSSID;
+          ipInput.style.borderColor = '#d1d5db';
+          statusEl.style.display = 'none';
+          submitBtn.disabled = false;
+        } else {
+          ipInput.value = lastIP;
+          ssidInput.value = lastSSID;
+          statusEl.innerHTML = `⚠️ IP sudah mencapai maksimal (${IP_MAX}). Tidak bisa increment lagi.`;
+          statusEl.className = 'status warning';
+          statusEl.style.display = 'block';
+          submitBtn.disabled = true;
+        }
+        const uniqueRouters = [...new Set(allData.map(d => d.ROUTER).filter(r => r))];
+        routerList.innerHTML = '';
+        uniqueRouters.forEach(router => {
+          const option = document.createElement('option');
+          option.value = router;
+          routerList.appendChild(option);
+        });
+      } catch (err) {
+        dataBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#dc2626;">Gagal memuat data: ${err.message}</td></tr>`;
+      }
+    }
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (isLoading) return;
+      isLoading = true;
+      submitBtn.disabled = true;
+      statusEl.innerHTML = '<span class="loading-spinner"></span>Mengirim data...';
+      statusEl.className = 'status loading';
+      statusEl.style.display = 'block';
+      const data = {
+        IP: ipInput.value.trim(),
+        MACC: form.MACC.value.trim(),
+        SSID: ssidInput.value.trim(),
+        ROUTER: form.ROUTER.value.trim()
+      };
+      if (!data.IP || !data.MACC || !data.SSID || !data.ROUTER) {
+        statusEl.textContent = '❌ Semua field harus diisi!';
+        statusEl.className = 'status err';
+        isLoading = false;
+        submitBtn.disabled = false;
+        return;
+      }
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        if (json.status === 'error') throw new Error(json.message);
+        statusEl.innerHTML = '✅ ' + (json.message || 'Data tersimpan dengan sukses!');
+        statusEl.className = 'status ok';
+        form.MACC.value = '';
+        form.ROUTER.value = '';
+        setTimeout(loadData, 1000);
+      } catch (err) {
+        statusEl.innerHTML = '❌ Gagal mengirim data: ' + err.message;
+        statusEl.className = 'status err';
+      } finally {
+        isLoading = false;
+        submitBtn.disabled = false;
+      }
+    });
+    loadData();
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>
