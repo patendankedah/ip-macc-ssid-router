@@ -2,260 +2,349 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Input IP MACC SSID ROUTER</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IP – MAC – SSID – ROUTER</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --border: #d1d5db;
+      --text: #111827;
+      --muted: #6b7280;
+      --bg: #f3f4f6;
+      --primary: #2563eb;
+      --danger: #b91c1c;
+      --success: #15803d;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 16px;
-      display: flex;
-      justify-content: center;
-    }
-    .wrapper { width: 100%; max-width: 900px; }
-    .card {
       background: #ffffff;
-      border-radius: 16px;
+      color: var(--text);
       padding: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      margin-bottom: 16px;
     }
-    .title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #111827; }
-    .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { border-bottom: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
-    th { background: #f3f4f6; font-weight: 600; }
-    tr:hover td { background: #f9fafb; }
-    .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .form-group { margin-bottom: 10px; }
-    label { display: block; font-size: 12px; font-weight: 500; color: #4b5563; margin-bottom: 3px; }
-    input, select {
-      width: 100%;
-      padding: 7px 9px;
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .card {
+      border: 1px solid var(--border);
       border-radius: 8px;
-      border: 1px solid #d1d5db;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #ffffff;
     }
-    input:focus, select:focus { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.2); }
-    input[readonly] { background: #f3f4f6; cursor: not-allowed; color: #666; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 6px 4px;
+      text-align: left;
+    }
+    th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 8px;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+      color: var(--muted);
+    }
+    input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    input[readonly] {
+      background: var(--bg);
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
     .btn {
       width: 100%;
       border: none;
-      border-radius: 999px;
-      padding: 9px;
-      font-size: 14px;
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
-      color: #fff;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      box-shadow: 0 8px 15px rgba(102,126,234,0.3);
-      transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+      background: var(--primary);
+      color: #ffffff;
       margin-top: 4px;
     }
-    .btn:active { transform: translateY(1px); box-shadow: 0 4px 8px rgba(102,126,234,0.25); opacity: 0.9; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
     .status {
-      margin-top: 8px;
-      font-size: 12px;
-      text-align: center;
+      margin-top: 6px;
       padding: 6px;
-      border-radius: 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      display: none;
     }
-    .status.ok { color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; }
-    .status.err { color: #991b1b; background: #fee2e2; border: 1px solid #fecaca; }
-    .status.warning { color: #92400e; background: #fef3c7; border: 1px solid #fde68a; }
-    .status.loading { color: #1e40af; background: #dbeafe; border: 1px solid #bfdbfe; }
-    .loading-spinner {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border: 2px solid #667eea;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      margin-right: 6px;
-      vertical-align: middle;
+    .status.ok {
+      background: #dcfce7;
+      border: 1px solid #bbf7d0;
+      color: var(--success);
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+    .status.err {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: var(--danger);
+    }
+    .status.warn {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: var(--warn);
+    }
+    .status.info {
+      background: #e0f2fe;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+    }
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="title">📊 Data Terakhir</div>
-      <div class="subtitle">Menampilkan baris terakhir dari Google Sheet.</div>
-      <div style="overflow-x:auto;">
-        <table id="dataTable">
-          <thead>
-            <tr><th>IP</th><th>MACC</th><th>SSID</th><th>ROUTER</th></tr>
-          </thead>
-          <tbody id="dataBody">
-            <tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="container">
+    <!-- HEADER -->
+    <div style="margin-bottom:12px;">
+      <h1>Manajemen IP – MAC – SSID – ROUTER</h1>
+      <p class="subtitle">Baca baris terakhir dari Google Sheet dan input data baru dengan auto-increment IP & SSID.</p>
     </div>
 
+    <!-- DATA TERAKHIR -->
     <div class="card">
-      <div class="title">➕ Input Data Baru</div>
-      <div class="subtitle">IP & SSID increment otomatis. Isi MACC & pilih ROUTER.</div>
+      <h2 style="font-size:1rem; margin-bottom:6px;">Data Terakhir</h2>
+      <p class="subtitle" style="margin-bottom:8px;">Menampilkan hanya baris paling akhir dari sheet.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>IP</th>
+            <th>MACC</th>
+            <th>SSID</th>
+            <th>ROUTER</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody">
+          <tr>
+            <td colspan="4" style="text-align:center;">Memuat data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FORM INPUT -->
+    <div class="card">
+      <h2 style="font-size:1rem; margin-bottom:6px;">Input Data Baru</h2>
+      <p class="subtitle" style="margin-bottom:8px;">IP & SSID diisi otomatis. Lengkapi MACC dan ROUTER.</p>
+
       <form id="dataForm">
         <div class="form-row">
           <div class="form-group">
-            <label for="IP">IP Address <span style="color:#999;">(Auto Increment)</span></label>
+            <label for="IP">IP Address (auto)</label>
             <input type="text" id="IP" name="IP" readonly placeholder="Diisi otomatis">
           </div>
           <div class="form-group">
-            <label for="MACC">MAC Address <span style="color:#999;">(Manual)</span></label>
+            <label for="MACC">MAC Address</label>
             <input type="text" id="MACC" name="MACC" placeholder="AA:BB:CC:DD:EE:FF" required>
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-group">
-            <label for="SSID">SSID <span style="color:#999;">(Auto Increment)</span></label>
+            <label for="SSID">SSID (auto)</label>
             <input type="text" id="SSID" name="SSID" readonly placeholder="Diisi otomatis">
           </div>
           <div class="form-group">
-            <label for="ROUTER">ROUTER <span style="color:#999;">(Pilih/Ketik)</span></label>
-            <input type="text" id="ROUTER" name="ROUTER" list="routerList" placeholder="Pilih atau ketik ROUTER" required>
-            <datalist id="routerList"></datalist>
+            <label for="ROUTER">ROUTER</label>
+            <input type="text" id="ROUTER" name="ROUTER" placeholder="Nama router" required>
           </div>
         </div>
+
         <button type="submit" class="btn" id="submitBtn">Kirim</button>
       </form>
-      <div id="status" class="status" style="display:none;"></div>
+
+      <div id="status" class="status"></div>
     </div>
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyvXCS1Jqqeydvb5lj3UA5f5xzGbLg5nIwVDxV1KQe_MO1N9YkRAfVnBOo1A3I2wwn5/exec';
+    const API_URL  = 'https://script.google.com/macros/s/AKfycbyvXCS1Jqqeydvb5lj3UA5f5xzGbLg5nIwVDxV1KQe_MO1N9YkRAfVnBOo1A3I2wwn5/exec';
     const IP_PREFIX = '192.168.200.';
-    const IP_MAX = 253;
-    const dataBody = document.getElementById('dataBody');
-    const form = document.getElementById('dataForm');
-    const statusEl = document.getElementById('status');
-    const ipInput = document.getElementById('IP');
+    const IP_MAX    = 253;
+
+    const dataBody  = document.getElementById('dataBody');
+    const form      = document.getElementById('dataForm');
+    const statusEl  = document.getElementById('status');
+    const ipInput   = document.getElementById('IP');
     const ssidInput = document.getElementById('SSID');
-    const routerList = document.getElementById('routerList');
     const submitBtn = document.getElementById('submitBtn');
-    let allData = [];
+
     let isLoading = false;
+
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + type;
+      statusEl.style.display = 'block';
+    }
+
     function incrementIP(ipString) {
       try {
         const parts = ipString.split('.');
         if (parts.length !== 4) return null;
-        let lastOctet = parseInt(parts[3], 10);
-        lastOctet++;
-        if (lastOctet > IP_MAX) return null;
-        return `${IP_PREFIX}${lastOctet}`;
-      } catch (err) { return null; }
+        let last = parseInt(parts[3], 10);
+        last++;
+        if (last > IP_MAX) return null;
+        return IP_PREFIX + last;
+      } catch {
+        return null;
+      }
     }
+
     function incrementSSID(ssidString, nextIPNumber) {
       try {
-        const match = ssidString.match(/^(.+?)\s*(\d+)$/);
+        const match = ssidString.match(/^(.+?)\\s*(\\d+)$/);
         if (!match) return ssidString;
         const prefix = match[1];
-        return `${prefix} ${nextIPNumber}`;
-      } catch (err) { return ssidString; }
+        return prefix + ' ' + nextIPNumber;
+      } catch {
+        return ssidString;
+      }
     }
+
     async function loadData() {
       try {
         dataBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>';
+
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        const jsonResponse = await res.json();
-        if (jsonResponse.status === 'error') throw new Error(jsonResponse.message);
-        allData = Array.isArray(jsonResponse) ? jsonResponse : [];
+
+        const json = await res.json();
+        const allData = Array.isArray(json) ? json : [];
+
         if (allData.length === 0) {
           dataBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data.</td></tr>';
           ipInput.value = '';
           ssidInput.value = '';
-          routerList.innerHTML = '';
           return;
         }
+
         const lastData = allData[allData.length - 1];
-        dataBody.innerHTML = '';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${lastData.IP || '-'}</td><td>${lastData.MACC || '-'}</td><td>${lastData.SSID || '-'}</td><td>${lastData.ROUTER || '-'}</td>`;
-        dataBody.appendChild(tr);
-        const lastIP = lastData.IP || '';
+
+        dataBody.innerHTML = `
+          <tr>
+            <td>${lastData.IP || '-'}</td>
+            <td>${lastData.MACC || '-'}</td>
+            <td>${lastData.SSID || '-'}</td>
+            <td>${lastData.ROUTER || '-'}</td>
+          </tr>
+        `;
+
+        const lastIP   = lastData.IP   || '';
         const lastSSID = lastData.SSID || '';
-        const nextIP = incrementIP(lastIP);
+        const nextIP   = incrementIP(lastIP);
+
         if (nextIP) {
-          const nextIPNumber = parseInt(nextIP.split('.')[3], 10);
-          ipInput.value = nextIP;
-          const nextSSID = incrementSSID(lastSSID, nextIPNumber);
-          ssidInput.value = nextSSID;
-          ipInput.style.borderColor = '#d1d5db';
-          statusEl.style.display = 'none';
+          const nextNum = parseInt(nextIP.split('.')[3], 10);
+          ipInput.value   = nextIP;
+          ssidInput.value = incrementSSID(lastSSID, nextNum);
           submitBtn.disabled = false;
         } else {
-          ipInput.value = lastIP;
+          ipInput.value   = lastIP;
           ssidInput.value = lastSSID;
-          statusEl.innerHTML = `⚠️ IP sudah mencapai maksimal (${IP_MAX}). Tidak bisa increment lagi.`;
-          statusEl.className = 'status warning';
-          statusEl.style.display = 'block';
           submitBtn.disabled = true;
+          showStatus('IP sudah mencapai maksimal (' + IP_MAX + ').', 'warn');
         }
-        const uniqueRouters = [...new Set(allData.map(d => d.ROUTER).filter(r => r))];
-        routerList.innerHTML = '';
-        uniqueRouters.forEach(router => {
-          const option = document.createElement('option');
-          option.value = router;
-          routerList.appendChild(option);
-        });
       } catch (err) {
-        dataBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#dc2626;">Gagal memuat data: ${err.message}</td></tr>`;
+        dataBody.innerHTML = `
+          <tr>
+            <td colspan="4" style="text-align:center;color:#b91c1c;">
+              Gagal memuat data: ${err.message}
+            </td>
+          </tr>`;
       }
     }
-    form.addEventListener('submit', async function (e) {
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (isLoading) return;
       isLoading = true;
       submitBtn.disabled = true;
-      statusEl.innerHTML = '<span class="loading-spinner"></span>Mengirim data...';
-      statusEl.className = 'status loading';
-      statusEl.style.display = 'block';
-      const data = {
-        IP: ipInput.value.trim(),
-        MACC: form.MACC.value.trim(),
-        SSID: ssidInput.value.trim(),
-        ROUTER: form.ROUTER.value.trim()
-      };
-      if (!data.IP || !data.MACC || !data.SSID || !data.ROUTER) {
-        statusEl.textContent = '❌ Semua field harus diisi!';
-        statusEl.className = 'status err';
+
+      showStatus('Mengirim data...', 'info');
+
+      const IP     = ipInput.value.trim();
+      const MACC   = form.MACC.value.trim();
+      const SSID   = ssidInput.value.trim();
+      const ROUTER = form.ROUTER.value.trim();
+
+      if (!IP || !MACC || !SSID || !ROUTER) {
+        showStatus('Semua field wajib diisi.', 'err');
         isLoading = false;
         submitBtn.disabled = false;
         return;
       }
+
       try {
-        const res = await fetch(API_URL, {
+        const body = new URLSearchParams();
+        body.append('IP', IP);
+        body.append('MACC', MACC);
+        body.append('SSID', SSID);
+        body.append('ROUTER', ROUTER);
+
+        await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          },
+          body
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const json = await res.json();
-        if (json.status === 'error') throw new Error(json.message);
-        statusEl.innerHTML = '✅ ' + (json.message || 'Data tersimpan dengan sukses!');
-        statusEl.className = 'status ok';
-        form.MACC.value = '';
+
+        showStatus('Data dikirim. Cek Google Sheet untuk memastikan tersimpan.', 'ok');
+
+        form.MACC.value   = '';
         form.ROUTER.value = '';
+
         setTimeout(loadData, 1000);
       } catch (err) {
-        statusEl.innerHTML = '❌ Gagal mengirim data: ' + err.message;
-        statusEl.className = 'status err';
+        showStatus('Gagal mengirim data: ' + err.message, 'err');
       } finally {
         isLoading = false;
         submitBtn.disabled = false;
       }
     });
+
     loadData();
     setInterval(loadData, 10000);
   </script>
