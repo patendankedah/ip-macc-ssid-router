@@ -1,426 +1,693 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IP – MAC – SSID – ROUTER</title>
-  <style>
-    :root {
-      --border: #d1d5db;
-      --text: #111827;
-      --muted: #6b7280;
-      --bg: #f3f4f6;
-      --primary: #2563eb;
-      --danger: #b91c1c;
-      --success: #15803d;
-      --warn: #92400e;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: #ffffff;
-      color: var(--text);
-      padding: 16px;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    h1 {
-      font-size: 1.2rem;
-      margin-bottom: 4px;
-    }
-    .subtitle {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 12px;
-      background: #ffffff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    th, td {
-      border-bottom: 1px solid var(--border);
-      padding: 6px 4px;
-      text-align: left;
-    }
-    th {
-      background: var(--bg);
-      font-weight: 600;
-    }
+<script>
+  // ============================================
+  // KONFIGURASI
+  // ============================================
 
-    .top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-    .refresh-btn {
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      cursor: pointer;
-      color: var(--text);
-      white-space: nowrap;
-    }
+  const API_URL =
+    'https://script.google.com/macros/s/AKfycbyvXCS1Jqqeydvb5lj3UA5f5xzGbLg5nIwVDxV1KQe_MO1N9YkRAfVnBOo1A3I2wwn5/exec';
 
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .form-group {
-      margin-bottom: 8px;
-    }
-    label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 500;
-      margin-bottom: 2px;
-      color: var(--muted);
-    }
-    input {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      font-size: 0.85rem;
-    }
-    input[readonly] {
-      background: var(--bg);
-    }
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    .btn {
-      width: 100%;
-      border: none;
-      border-radius: 4px;
-      padding: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--primary);
-      color: #ffffff;
-      margin-top: 4px;
-    }
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .status {
-      margin-top: 6px;
-      padding: 6px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      display: none;
-    }
-    .status.ok {
-      background: #dcfce7;
-      border: 1px solid #bbf7d0;
-      color: var(--success);
-    }
-    .status.err {
-      background: #fee2e2;
-      border: 1px solid #fecaca;
-      color: var(--danger);
-    }
-    .status.warn {
-      background: #fef3c7;
-      border: 1px solid #fde68a;
-      color: var(--warn);
-    }
-    .status.info {
-      background: #e0f2fe;
-      border: 1px solid #bfdbfe;
-      color: #1d4ed8;
-    }
-    @media (max-width: 640px) {
-      .form-row { grid-template-columns: 1fr; }
-      .top-row { flex-direction: column; align-items: flex-start; }
-      .refresh-btn { align-self: flex-end; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- HEADER -->
-    <div style="margin-bottom:12px;">
-      <h1>Manajemen IP – MAC – SSID – ROUTER</h1>
-      <p class="subtitle">Baca baris terakhir dari Google Sheet dan input data baru dengan auto-increment IP & SSID.</p>
-    </div>
+  const IP_PREFIX = '192.168.200.';
 
-    <!-- DATA TERAKHIR -->
-    <div class="card">
-      <div class="top-row">
-        <div>
-          <h2 style="font-size:1rem;">Data Terakhir</h2>
-          <p class="subtitle" style="margin-bottom:0;">Menampilkan baris paling akhir dari sheet.</p>
-        </div>
-        <button type="button" id="refreshBtn" class="refresh-btn">Refresh Data</button>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>IP</th>
-            <th>MACC</th>
-            <th>SSID</th>
-            <th>ROUTER</th>
-          </tr>
-        </thead>
-        <tbody id="dataBody">
-          <tr>
-            <td colspan="4" style="text-align:center;">Memuat data...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+  // IP terakhir yang boleh digunakan.
+  // .255 adalah broadcast, jadi gunakan .254 sebagai maksimum.
+  const IP_MAX = 254;
 
-    <!-- FORM INPUT -->
-    <div class="card">
-      <h2 style="font-size:1rem; margin-bottom:6px;">Input Data Baru</h2>
-      <p class="subtitle" style="margin-bottom:8px;">IP & SSID diisi otomatis. MACC & ROUTER bisa dipilih dari daftar.</p>
 
-      <form id="dataForm">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="IP">IP Address (auto)</label>
-            <input type="text" id="IP" name="IP" readonly placeholder="Diisi otomatis">
-          </div>
-          <div class="form-group">
-            <label for="MACC">MAC Address</label>
-            <input type="text" id="MACC" name="MACC" placeholder="AA:BB:CC:DD:EE:FF" required>
-          </div>
-        </div>
+  // ============================================
+  // ELEMENT HTML
+  // ============================================
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="SSID">SSID (auto)</label>
-            <input type="text" id="SSID" name="SSID" readonly placeholder="Diisi otomatis">
-          </div>
-          <div class="form-group">
-            <label for="ROUTER">ROUTER</label>
-            <input type="text" id="ROUTER" name="ROUTER" list="routerList" placeholder="Pilih atau ketik ROUTER" required>
-            <datalist id="routerList"></datalist>
-          </div>
-        </div>
+  const dataBody    = document.getElementById('dataBody');
+  const form        = document.getElementById('dataForm');
+  const statusEl    = document.getElementById('status');
 
-        <button type="submit" class="btn" id="submitBtn">Kirim</button>
+  const ipInput     = document.getElementById('IP');
+  const ssidInput   = document.getElementById('SSID');
+  const submitBtn   = document.getElementById('submitBtn');
+  const maccInput   = document.getElementById('MACC');
+  const refreshBtn  = document.getElementById('refreshBtn');
+  const routerInput = document.getElementById('ROUTER');
+  const routerList  = document.getElementById('routerList');
 
-      </form>
+  let isLoading = false;
 
-      <div id="status" class="status"></div>
-    </div>
-  </div>
 
-  <script>
-    const API_URL  = 'https://script.google.com/macros/s/AKfycbyvXCS1Jqqeydvb5lj3UA5f5xzGbLg5nIwVDxV1KQe_MO1N9YkRAfVnBOo1A3I2wwn5/exec';
-    const IP_PREFIX = '192.168.200.';
-    const IP_MAX    = 254;
+  // ============================================
+  // STATUS
+  // ============================================
 
-    const dataBody    = document.getElementById('dataBody');
-    const form        = document.getElementById('dataForm');
-    const statusEl    = document.getElementById('status');
-    const ipInput     = document.getElementById('IP');
-    const ssidInput   = document.getElementById('SSID');
-    const submitBtn   = document.getElementById('submitBtn');
-    const maccInput   = document.getElementById('MACC');
-    const refreshBtn  = document.getElementById('refreshBtn');
-    const routerInput = document.getElementById('ROUTER');
-    const routerList  = document.getElementById('routerList');
+  function showStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status ' + type;
+    statusEl.style.display = 'block';
+  }
 
-    let isLoading = false;
 
-    function showStatus(msg, type) {
-      statusEl.textContent = msg;
-      statusEl.className = 'status ' + type;
-      statusEl.style.display = 'block';
+  // ============================================
+  // FORMAT MAC ADDRESS
+  // ============================================
+
+  function formatMac(value) {
+    let v = value
+      .toUpperCase()
+      .replace(/[^0-9A-F]/g, '');
+
+    v = v.slice(0, 12);
+
+    const parts = v.match(/.{1,2}/g) || [];
+
+    return parts.join(':');
+  }
+
+
+  maccInput.addEventListener('input', () => {
+    const formatted = formatMac(maccInput.value);
+
+    maccInput.value = formatted;
+
+    maccInput.selectionStart =
+      maccInput.selectionEnd =
+      formatted.length;
+  });
+
+
+  // ============================================
+  // SSID OTOMATIS
+  // ============================================
+
+  function generateSSID(number) {
+    return 'P.GEMILANG ' + number;
+  }
+
+
+  // ============================================
+  // AMBIL NOMOR IP
+  // ============================================
+
+  function getIPNumber(ip) {
+    if (!ip) return null;
+
+    const value = String(ip).trim();
+
+    // Pastikan menggunakan prefix yang benar
+    if (!value.startsWith(IP_PREFIX)) {
+      return null;
     }
 
-    function incrementIP(ipString) {
-      try {
-        const parts = ipString.split('.');
-        if (parts.length !== 4) return null;
-        let last = parseInt(parts[3], 10);
-        last++;
-        if (last > IP_MAX) return null;
-        return IP_PREFIX + last;
-      } catch {
-        return null;
-      }
+    const parts = value.split('.');
+
+    if (parts.length !== 4) {
+      return null;
     }
 
-    function incrementSSID(ssidString, nextIPNumber) {
-      try {
-        const match = ssidString.match(/^(.+?)\s*(\d+)$/);
-        if (match) {
-          const prefix = match[1].trim();
-          const lastNum = parseInt(match[2], 10);
-          const newNum = lastNum + 1;
-          return prefix + ' ' + newNum;
-        }
-        const prefixOnly = (ssidString || '').trim();
-        if (!prefixOnly) return 'SSID ' + nextIPNumber;
-        return prefixOnly + ' ' + nextIPNumber;
-      } catch {
-        return ssidString;
-      }
+    const number = parseInt(parts[3], 10);
+
+    if (isNaN(number)) {
+      return null;
     }
 
-    function formatMac(value) {
-      let v = value.toUpperCase().replace(/[^0-9A-F]/g, '');
-      v = v.slice(0, 12);
-      const parts = v.match(/.{1,2}/g) || [];
-      return parts.join(':');
-    }
+    return number;
+  }
 
-    maccInput.addEventListener('input', () => {
-      const formatted = formatMac(maccInput.value);
-      maccInput.value = formatted;
-      maccInput.selectionStart = maccInput.selectionEnd = formatted.length;
-    });
 
-    // isi datalist router dari seluruh data unik
-    function updateRouterList(allData) {
-      const routers = allData
-        .map(row => row.ROUTER)
-        .filter(r => typeof r === 'string' && r.trim() !== '');
-      const uniqueRouters = [...new Set(routers)];
-      routerList.innerHTML = '';
-      uniqueRouters.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r;
-        routerList.appendChild(opt);
-      });
-    }
+  // ============================================
+  // CARI IP TERBESAR
+  // ============================================
 
-    async function loadData() {
-      try {
-        dataBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>';
+  function findHighestIP(allData) {
 
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+    let highest = 0;
+    let highestRow = null;
 
-        const json = await res.json();
-        const allData = Array.isArray(json) ? json : [];
+    allData.forEach(row => {
 
-        // update pilihan router dari seluruh data
-        updateRouterList(allData);
+      const ipNumber = getIPNumber(row.IP);
 
-        if (allData.length === 0) {
-          dataBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data.</td></tr>';
-          ipInput.value = '';
-          ssidInput.value = '';
-          routerInput.value = '';
-          return;
-        }
-
-        const lastData   = allData[allData.length - 1];
-        const lastIP     = lastData.IP     || '';
-        const lastSSID   = lastData.SSID   || '';
-        const lastRouter = lastData.ROUTER || '';
-        const nextIP     = incrementIP(lastIP);
-
-        dataBody.innerHTML = `
-          <tr>
-            <td>${lastData.IP || '-'}</td>
-            <td>${lastData.MACC || '-'}</td>
-            <td>${lastData.SSID || '-'}</td>
-            <td>${lastData.ROUTER || '-'}</td>
-          </tr>
-        `;
-
-        // nilai default router = router terakhir (boleh diganti)
-        routerInput.value = lastRouter;
-
-        if (nextIP) {
-          const nextNum = parseInt(nextIP.split('.')[3], 10);
-          ipInput.value   = nextIP;
-          ssidInput.value = incrementSSID(lastSSID, nextNum);
-          submitBtn.disabled = false;
-        } else {
-          ipInput.value   = lastIP;
-          ssidInput.value = lastSSID;
-          submitBtn.disabled = true;
-          showStatus('IP sudah mencapai maksimal (' + IP_MAX + ').', 'warn');
-        }
-      } catch (err) {
-        dataBody.innerHTML = `
-          <tr>
-            <td colspan="4" style="text-align:center;color:#b91c1c;">
-              Gagal memuat data: ${err.message}
-            </td>
-          </tr>`;
-      }
-    }
-
-    refreshBtn.addEventListener('click', () => {
-      loadData();
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (isLoading) return;
-      isLoading = true;
-      submitBtn.disabled = true;
-
-      showStatus('Mengirim data...', 'info');
-
-      const IP     = ipInput.value.trim();
-      const MACC   = maccInput.value.trim();
-      const SSID   = ssidInput.value.trim();
-      const ROUTER = routerInput.value.trim();
-
-      if (!IP || !MACC || !SSID || !ROUTER) {
-        showStatus('Semua field wajib diisi.', 'err');
-        isLoading = false;
-        submitBtn.disabled = false;
+      if (ipNumber === null) {
         return;
       }
 
-      try {
-        const body = new URLSearchParams();
-        body.append('IP', IP);
-        body.append('MACC', MACC);
-        body.append('SSID', SSID);
-        body.append('ROUTER', ROUTER);
-
-        await fetch(API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-          },
-          body
-        });
-
-        showStatus('Data dikirim. Cek Google Sheet untuk memastikan tersimpan.', 'ok');
-
-        maccInput.value = '';
-        // ROUTER dibiarkan, biasanya input berulang di router yang sama
-
-        setTimeout(loadData, 1000);
-      } catch (err) {
-        showStatus('Gagal mengirim data: ' + err.message, 'err');
-      } finally {
-        isLoading = false;
-        submitBtn.disabled = false;
+      if (ipNumber > highest) {
+        highest = ipNumber;
+        highestRow = row;
       }
+
     });
 
-    loadData();
-  </script>
-</body>
-</html>
+    return {
+      number: highest,
+      row: highestRow
+    };
+  }
+
+
+  // ============================================
+  // UPDATE DAFTAR ROUTER
+  // ============================================
+
+  function updateRouterList(allData) {
+
+    const routers = allData
+      .map(row => row.ROUTER)
+      .filter(
+        r =>
+          typeof r === 'string' &&
+          r.trim() !== ''
+      );
+
+    const uniqueRouters = [
+      ...new Set(routers)
+    ];
+
+    routerList.innerHTML = '';
+
+    uniqueRouters.forEach(router => {
+
+      const option =
+        document.createElement('option');
+
+      option.value = router;
+
+      routerList.appendChild(option);
+
+    });
+  }
+
+
+  // ============================================
+  // LOAD DATA DARI GOOGLE SHEET
+  // ============================================
+
+  async function loadData() {
+
+    try {
+
+      dataBody.innerHTML =
+        '<tr>' +
+        '<td colspan="4" style="text-align:center;">' +
+        'Memuat data...' +
+        '</td>' +
+        '</tr>';
+
+
+      // ------------------------------------------
+      // AMBIL DATA
+      // ------------------------------------------
+
+      const res = await fetch(API_URL);
+
+      if (!res.ok) {
+        throw new Error(
+          'HTTP ' + res.status
+        );
+      }
+
+
+      const json = await res.json();
+
+
+      if (!Array.isArray(json)) {
+
+        throw new Error(
+          'Data dari Google Sheet bukan array.'
+        );
+
+      }
+
+
+      const allData = json;
+
+
+      // ------------------------------------------
+      // UPDATE ROUTER
+      // ------------------------------------------
+
+      updateRouterList(allData);
+
+
+      // ------------------------------------------
+      // JIKA BELUM ADA DATA
+      // ------------------------------------------
+
+      if (allData.length === 0) {
+
+        dataBody.innerHTML =
+          '<tr>' +
+          '<td colspan="4" style="text-align:center;">' +
+          'Belum ada data.' +
+          '</td>' +
+          '</tr>';
+
+        ipInput.value =
+          IP_PREFIX + '1';
+
+        ssidInput.value =
+          generateSSID(1);
+
+        routerInput.value = '';
+
+        submitBtn.disabled = false;
+
+        return;
+      }
+
+
+      // ------------------------------------------
+      // CARI IP TERBESAR
+      // ------------------------------------------
+
+      const highest =
+        findHighestIP(allData);
+
+
+      const highestNumber =
+        highest.number;
+
+      const highestRow =
+        highest.row;
+
+
+      // ------------------------------------------
+      // JIKA TIDAK ADA IP YANG VALID
+      // ------------------------------------------
+
+      if (!highestRow) {
+
+        dataBody.innerHTML =
+          '<tr>' +
+          '<td colspan="4" style="text-align:center;">' +
+          'Data ada, tetapi tidak ditemukan IP ' +
+          IP_PREFIX +
+          '</td>' +
+          '</tr>';
+
+        ipInput.value =
+          IP_PREFIX + '1';
+
+        ssidInput.value =
+          generateSSID(1);
+
+        submitBtn.disabled = false;
+
+        return;
+      }
+
+
+      // ------------------------------------------
+      // DATA TERAKHIR / TERBESAR
+      // ------------------------------------------
+
+      const lastIP =
+        IP_PREFIX + highestNumber;
+
+      const lastSSID =
+        highestRow.SSID || '';
+
+      const lastRouter =
+        highestRow.ROUTER || '';
+
+
+      // ------------------------------------------
+      // TAMPILKAN DATA TERBESAR
+      // ------------------------------------------
+
+      dataBody.innerHTML = `
+        <tr>
+          <td>${highestRow.IP || '-'}</td>
+          <td>${highestRow.MACC || '-'}</td>
+          <td>${highestRow.SSID || '-'}</td>
+          <td>${highestRow.ROUTER || '-'}</td>
+        </tr>
+      `;
+
+
+      // ------------------------------------------
+      // ROUTER DEFAULT
+      // ------------------------------------------
+
+      routerInput.value = lastRouter;
+
+
+      // ------------------------------------------
+      // HITUNG IP BERIKUTNYA
+      // ------------------------------------------
+
+      const nextNumber =
+        highestNumber + 1;
+
+
+      // ------------------------------------------
+      // CEK BATAS MAKSIMUM
+      // ------------------------------------------
+
+      if (nextNumber <= IP_MAX) {
+
+        const nextIP =
+          IP_PREFIX + nextNumber;
+
+
+        // ----------------------------------------
+        // ISI IP OTOMATIS
+        // ----------------------------------------
+
+        ipInput.value =
+          nextIP;
+
+
+        // ----------------------------------------
+        // ISI SSID OTOMATIS
+        // ----------------------------------------
+
+        ssidInput.value =
+          generateSSID(nextNumber);
+
+
+        // ----------------------------------------
+        // AKTIFKAN TOMBOL
+        // ----------------------------------------
+
+        submitBtn.disabled = false;
+
+
+        // ----------------------------------------
+        // DEBUG
+        // ----------------------------------------
+
+        console.log(
+          '================================'
+        );
+
+        console.log(
+          'Jumlah data        :',
+          allData.length
+        );
+
+        console.log(
+          'IP terbesar        :',
+          lastIP
+        );
+
+        console.log(
+          'Nomor IP terbesar  :',
+          highestNumber
+        );
+
+        console.log(
+          'IP berikutnya      :',
+          nextIP
+        );
+
+        console.log(
+          'SSID berikutnya    :',
+          ssidInput.value
+        );
+
+        console.log(
+          'Router terakhir    :',
+          lastRouter
+        );
+
+        console.log(
+          '================================'
+        );
+
+      } else {
+
+        // ----------------------------------------
+        // SUDAH MAKSIMAL
+        // ----------------------------------------
+
+        ipInput.value =
+          lastIP;
+
+        ssidInput.value =
+          lastSSID;
+
+        submitBtn.disabled = true;
+
+        showStatus(
+          'IP sudah mencapai maksimal (' +
+          IP_MAX +
+          ').',
+          'warn'
+        );
+
+      }
+
+
+    } catch (err) {
+
+      console.error(
+        'Gagal memuat data:',
+        err
+      );
+
+
+      dataBody.innerHTML = `
+        <tr>
+          <td colspan="4"
+              style="text-align:center;color:#b91c1c;">
+            Gagal memuat data:
+            ${err.message}
+          </td>
+        </tr>
+      `;
+
+      showStatus(
+        'Gagal mengambil data dari Google Sheet: ' +
+        err.message,
+        'err'
+      );
+
+    }
+
+  }
+
+
+  // ============================================
+  // REFRESH
+  // ============================================
+
+  refreshBtn.addEventListener(
+    'click',
+    () => {
+
+      loadData();
+
+    }
+  );
+
+
+  // ============================================
+  // SUBMIT FORM
+  // ============================================
+
+  form.addEventListener(
+    'submit',
+    async (e) => {
+
+      e.preventDefault();
+
+
+      if (isLoading) {
+        return;
+      }
+
+
+      isLoading = true;
+
+      submitBtn.disabled = true;
+
+
+      showStatus(
+        'Mengirim data...',
+        'info'
+      );
+
+
+      // ------------------------------------------
+      // AMBIL DATA FORM
+      // ------------------------------------------
+
+      const IP =
+        ipInput.value.trim();
+
+      const MACC =
+        maccInput.value.trim();
+
+      const SSID =
+        ssidInput.value.trim();
+
+      const ROUTER =
+        routerInput.value.trim();
+
+
+      // ------------------------------------------
+      // VALIDASI
+      // ------------------------------------------
+
+      if (
+        !IP ||
+        !MACC ||
+        !SSID ||
+        !ROUTER
+      ) {
+
+        showStatus(
+          'Semua field wajib diisi.',
+          'err'
+        );
+
+        isLoading = false;
+
+        submitBtn.disabled = false;
+
+        return;
+      }
+
+
+      // ------------------------------------------
+      // VALIDASI MAC
+      // ------------------------------------------
+
+      const macPattern =
+        /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/;
+
+
+      if (!macPattern.test(MACC)) {
+
+        showStatus(
+          'Format MAC Address tidak valid.',
+          'err'
+        );
+
+        isLoading = false;
+
+        submitBtn.disabled = false;
+
+        return;
+      }
+
+
+      try {
+
+        // ----------------------------------------
+        // SIAPKAN DATA
+        // ----------------------------------------
+
+        const body =
+          new URLSearchParams();
+
+        body.append(
+          'IP',
+          IP
+        );
+
+        body.append(
+          'MACC',
+          MACC
+        );
+
+        body.append(
+          'SSID',
+          SSID
+        );
+
+        body.append(
+          'ROUTER',
+          ROUTER
+        );
+
+
+        // ----------------------------------------
+        // KIRIM KE GOOGLE APPS SCRIPT
+        // ----------------------------------------
+
+        await fetch(
+          API_URL,
+          {
+            method: 'POST',
+
+            mode: 'no-cors',
+
+            headers: {
+              'Content-Type':
+                'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+
+            body: body
+          }
+        );
+
+
+        // ----------------------------------------
+        // BERHASIL DIKIRIM
+        // ----------------------------------------
+
+        showStatus(
+          'Data dikirim. Memperbarui data...',
+          'ok'
+        );
+
+
+        // Kosongkan MAC
+        maccInput.value = '';
+
+
+        // ----------------------------------------
+        // TUNGGU SEBENTAR LALU LOAD ULANG
+        // ----------------------------------------
+
+        setTimeout(
+          () => {
+
+            loadData();
+
+          },
+          1000
+        );
+
+
+      } catch (err) {
+
+        showStatus(
+          'Gagal mengirim data: ' +
+          err.message,
+          'err'
+        );
+
+      } finally {
+
+        isLoading = false;
+
+        // Jangan langsung aktifkan jika
+        // loadData() nanti menentukan sudah .254
+        setTimeout(
+          () => {
+
+            if (
+              ipInput.value &&
+              getIPNumber(ipInput.value) < IP_MAX
+            ) {
+
+              submitBtn.disabled = false;
+
+            }
+
+          },
+          1200
+        );
+
+      }
+
+    }
+  );
+
+
+  // ============================================
+  // JALANKAN SAAT HALAMAN DIBUKA
+  // ============================================
+
+  loadData();
+
+</script>
